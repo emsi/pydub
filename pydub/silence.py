@@ -37,7 +37,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
     max_buffer_size_kb - the maximum size of internally allocated buffers in KiB
     """
     raw_data = _convert_to_numpy(audio_segment)
-    min_silence = min_silence_len
+    min_silence_len = min_silence_len
     silence_threshold_db = silence_thresh
     seek_step_ms = seek_step
     
@@ -47,7 +47,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
     assert raw_data.shape[0] == audio_segment.frame_count()
     assert raw_data.shape[1] == audio_segment.channels
     
-    max_frames_in_slice = int(np.ceil(min_silence * frames_per_ms))
+    max_frames_in_slice = int(np.ceil(min_silence_len * frames_per_ms))
     
     # determine number of frames in computation window buffer
     if max_buffer_size_kb >= 0:
@@ -61,13 +61,13 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
         buffer_len //= correction_constant
         if buffer_len < max_frames_in_slice:
             min_buffer_size = int(np.ceil(max_frames_in_slice * bytes_per_frame / 1024)) * correction_constant
-            raise ValueError("Buffer is too small, must be at least {} for the given {}" % min_buffer_size, min_silence)
+            raise ValueError("Buffer is too small, must be at least {} for the given {}" % min_buffer_size, min_silence_len)
     else:
         buffer_len = len(raw_data)  # no restrictions!
         
     
     # you can't have a silent portion of a sound that is longer than the sound
-    if seg_len < min_silence:
+    if seg_len < min_silence_len:
         return []
     
     # convert silence threshold to a float value (so we can compare it to rms)
@@ -77,7 +77,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
 
     # check successive (1 sec by default) chunk of sound for silence
     # try a chunk at every "seek step" (or every chunk for a seek step == 1)
-    last_slice_start = seg_len - min_silence
+    last_slice_start = seg_len - min_silence_len
     slice_starts = range(0, last_slice_start + 1, seek_step_ms)
 
     # guarantee last_slice_start is included in the range
@@ -108,7 +108,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
     
     for slice_start_ms in slice_starts:
         slice_start = int(slice_start_ms * frames_per_ms)
-        slice_end = min(int((slice_start_ms + min_silence) * frames_per_ms), len(raw_data))
+        slice_end = min(int((slice_start_ms + min_silence_len) * frames_per_ms), len(raw_data))
         assert slice_end <= len(raw_data)
         # if the frame_rate is not divisible by min_silence_ms, we may have frames with slightly varying lengths
         # so we compute the actual length of the concrete slice here
