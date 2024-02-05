@@ -41,7 +41,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
     silence_threshold_db = silence_thresh
     seek_step_ms = seek_step
     
-    seg_len_ms = len(audio_segment)
+    seg_len = len(audio_segment)
     frames_per_ms = audio_segment.frame_rate / 1000
     
     assert raw_data.shape[0] == audio_segment.frame_count()
@@ -67,7 +67,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
         
     
     # you can't have a silent portion of a sound that is longer than the sound
-    if seg_len_ms < min_silence_ms:
+    if seg_len < min_silence_ms:
         return []
     
     # convert silence threshold to a float value (so we can compare it to rms)
@@ -77,7 +77,7 @@ def detect_silence(audio_segment, min_silence_len=1000, silence_thresh=-16, seek
 
     # check successive (1 sec by default) chunk of sound for silence
     # try a chunk at every "seek step" (or every chunk for a seek step == 1)
-    last_slice_start = seg_len_ms - min_silence_ms
+    last_slice_start = seg_len - min_silence_ms
     slice_starts = range(0, last_slice_start + 1, seek_step_ms)
 
     # guarantee last_slice_start is included in the range
